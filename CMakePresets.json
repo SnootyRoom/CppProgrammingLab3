@@ -2,8 +2,8 @@
     "version": 8,
     "configurePresets": [
         {
-            "name": "GCC 15.2.0 x86_64-linux-gnu",
-            "displayName": "GCC 15.2.0 x86_64-linux-gnu",
+            "name": "linux-gcc-debug",
+            "displayName": "linux-gcc-debug",
             "description": "Using compilers: C = /usr/bin/gcc, CXX = /usr/bin/g++",
             "binaryDir": "${sourceDir}/out/build/${presetName}",
             "cacheVariables": {
