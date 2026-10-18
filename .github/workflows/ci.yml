@@ -1,0 +1,98 @@
+name: 'C++ CI'
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-and-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            preset-configure: linux-gcc-release
+            preset-build: build-linux-release
+            artifact-path: ./out/build/linux-gcc-release/CppProgrammingLab3
+            test-path: ./out/build/linux-gcc-release/tests/vector_tests
+          - os: windows-latest
+            preset-configure: windows-mingw-release
+            preset-build: build-windows-release
+            artifact-path: ./out/build/windows-mingw-release/CppProgrammingLab3.exe
+            test-path: ./out/build/windows-mingw-release/tests/vector_tests.exe
+
+    runs-on: ${{ matrix.os }}
+
+    defaults:
+      run:
+        shell: ${{ matrix.os == 'windows-latest' && 'msys2 {0}' || 'bash' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install tools and GTest (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build g++ cmake libgtest-dev
+
+      - name: Install MinGW and GTest (Windows)
+        if: matrix.os == 'windows-latest'
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-ninja
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-gtest
+
+      - name: CMake configure
+        run: cmake --preset ${{ matrix.preset-configure }}
+
+      - name: CMake build
+        run: cmake --build --preset ${{ matrix.preset-build }}
+
+      - name: Run unit tests
+        run: ${{ matrix.test-path }}
+
+      - name: Run demo program
+        run: ${{ matrix.artifact-path }}
+
+      - name: Build and run with sanitizers (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          cmake --preset linux-gcc-debug
+          cmake --build --preset build-linux-debug
+          ./out/build/linux-gcc-debug/CppProgrammingLab3
+          ./out/build/linux-gcc-debug/tests/vector_tests
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: binary-${{ matrix.os }}
+          path: ${{ matrix.artifact-path }}
+
+  create-release:
+    needs: build-and-test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Create release and upload assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v0.0.${{ github.run_number }}
+          name: Release v0.0.${{ github.run_number }}
+          files: |
+            binary-ubuntu-latest/*
+            binary-windows-latest/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

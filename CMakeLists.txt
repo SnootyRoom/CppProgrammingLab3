@@ -13,6 +13,5 @@ target_include_directories(container_vector INTERFACE ${CMAKE_CURRENT_SOURCE_DIR
 add_executable(CppProgrammingLab3 src/main.cpp)
 target_link_libraries(CppProgrammingLab3 PRIVATE container_vector)
 
-# Тесты подключим позже
-# enable_testing()
-# add_subdirectory(tests)
+enable_testing()
+add_subdirectory(tests)
