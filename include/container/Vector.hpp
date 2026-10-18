@@ -1,5 +1,6 @@
 #pragma once
-
+#include "VectorIterator.hpp"
+#include "Numeric.hpp"
 #include <cstddef>
 #include <type_traits>
 #include <utility>
@@ -7,7 +8,7 @@
 
 namespace lab3 
 {
-    template <typename T>
+    template <Numeric T>
     class Vector
     {
     private:
@@ -39,12 +40,13 @@ namespace lab3
         T& operator[](size_t index);
         const T& operator[](size_t index) const;
 
-        using iterator = T*;
-        using const_iterator = const T*;
+        using iterator       = VectorIterator<T>;
+        using const_iterator = VectorIterator<const T>;
 
-        iterator begin() {}
-        iterator end() {}
-        const_iterator begin() const {}
-        const_iterator end() const {}
+        iterator begin() noexcept { return iterator(data_); }
+        iterator end() noexcept { return iterator(data_ + size_); }
+
+        const_iterator begin() const noexcept { return const_iterator(data_); }
+        const_iterator end() const noexcept { return const_iterator(data_ + size_); }
     };
 }
